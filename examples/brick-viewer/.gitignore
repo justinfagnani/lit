@@ -1,0 +1,10 @@
+/node_modules/
+/lib/
+/test/
+/docs-components/
+
+# top level source
+brick-viewer.js
+brick-viewer.js.map
+brick-viewer.d.ts
+brick-viewer.d.ts.map

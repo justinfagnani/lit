@@ -1,0 +1,34 @@
+{
+  "version": "experimental",
+  "tags": [
+    {
+      "name": "brick-viewer",
+      "attributes": [
+        {
+          "name": "src",
+          "type": "string | null"
+        },
+        {
+          "name": "step",
+          "type": "number | undefined"
+        }
+      ],
+      "properties": [
+        {
+          "name": "src",
+          "attribute": "src",
+          "type": "string | null"
+        },
+        {
+          "name": "constructionStep",
+          "attribute": "step",
+          "type": "number | undefined"
+        },
+        {
+          "name": "slider",
+          "type": "Slider | null"
+        }
+      ]
+    }
+  ]
+}
