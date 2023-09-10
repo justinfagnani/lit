@@ -1,11 +1,16 @@
-import {startDevServer} from '@web/dev-server';
 import cors from 'koa-cors';
 import type {AbsolutePath, Analyzer} from '@lit-labs/analyzer';
-import type {DevServer} from '@web/dev-server-core';
+import type {DevServer} from './types.cjs';
+import {createRequire} from 'module';
 
-import * as vscode from 'vscode';
+const require = createRequire(import.meta.url);
 
-// Map of workspace folder to dev server
+import vscode = require('vscode');
+import wds = require('@web/dev-server');
+
+const {startDevServer} = wds;
+
+// Map of workspace folder to dev server and analyzer
 const workspaceResourcesCache = new Map<
   string,
   {server: DevServer; analyzer: Analyzer}

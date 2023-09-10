@@ -3,7 +3,7 @@
   "displayName": "Ignition",
   "description": "Advanced workflows for Lit",
   "version": "0.0.1",
-  "type": "commonjs",
+  "type": "module",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -11,7 +11,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./out/extension.cjs",
   "contributes": {
     "customEditors": [
       {
@@ -26,8 +26,8 @@
     ],
     "commands": [
       {
-        "command": "ignition.helloWorld",
-        "title": "Hello World"
+        "command": "ignition.hello",
+        "title": "Hello Ignition"
       }
     ]
   },
