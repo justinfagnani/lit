@@ -1,19 +1,23 @@
 import cors from 'koa-cors';
 import type {AbsolutePath, Analyzer} from '@lit-labs/analyzer';
+import {createPackageAnalyzer} from '@lit-labs/analyzer/package-analyzer.js';
 import type {DevServer} from './types.cjs';
 import {createRequire} from 'module';
+import type {Server} from 'http';
 
 const require = createRequire(import.meta.url);
 
 import vscode = require('vscode');
 import wds = require('@web/dev-server');
+import {startServer} from './server.js';
+import {AddressInfo} from 'net';
 
 const {startDevServer} = wds;
 
 // Map of workspace folder to dev server and analyzer
 const workspaceResourcesCache = new Map<
   string,
-  {server: DevServer; analyzer: Analyzer}
+  {server: DevServer; analyzer: Analyzer; server2: Server}
 >();
 
 const getWorkspaceResources = async (
@@ -23,11 +27,7 @@ const getWorkspaceResources = async (
     workspaceFolder.uri.fsPath
   );
   if (workspaceResources === undefined) {
-    const packageAnalyzerModulePromise = import(
-      '@lit-labs/analyzer/package-analyzer.js'
-    );
-
-    const serverPromise = startDevServer({
+    const server = await startDevServer({
       config: {
         rootDir: workspaceFolder!.uri.fsPath,
         nodeResolve: {
@@ -43,16 +43,12 @@ const getWorkspaceResources = async (
       readFileConfig: false,
     });
 
-    const [packageAnalyzerModule, server] = await Promise.all([
-      packageAnalyzerModulePromise,
-      serverPromise,
-    ]);
-    const {createPackageAnalyzer} = packageAnalyzerModule;
-
     const analyzer = createPackageAnalyzer(
       workspaceFolder!.uri.fsPath as AbsolutePath
     );
-    workspaceResources = {server, analyzer};
+
+    const server2 = await startServer(analyzer);
+    workspaceResources = {server, analyzer, server2};
     workspaceResourcesCache.set(workspaceFolder.uri.fsPath, workspaceResources);
   }
   return workspaceResources;
@@ -88,13 +84,16 @@ export class LitModuleEditorProvider
     };
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
 
-    const {server, analyzer} = await getWorkspaceResources(workspaceFolder!);
+    const {server, analyzer, server2} = await getWorkspaceResources(
+      workspaceFolder!
+    );
 
     webviewPanel.webview.html = this.getHtmlForWebview(
       document,
       workspaceFolder,
       analyzer,
-      server
+      server,
+      server2
     );
   }
 
@@ -102,13 +101,16 @@ export class LitModuleEditorProvider
     document: vscode.TextDocument,
     workspaceFolder: vscode.WorkspaceFolder | undefined,
     analyzer: Analyzer,
-    server: DevServer
+    server: DevServer,
+    server2: Server
   ): string {
     const modulePath = document.uri.fsPath;
     const module = analyzer.getModule(modulePath as AbsolutePath);
     const elements = module.getCustomElementExports();
     const {hostname, port} = server.config;
     const scriptUrl = `http://${hostname}:${port}/${module.jsPath}`;
+
+    const server2Address = server2.address() as AddressInfo;
 
     return /* html */ `
       <!DOCTYPE html>
@@ -130,6 +132,7 @@ export class LitModuleEditorProvider
             jsPath: ${module.jsPath}
             scriptUrl: ${scriptUrl}
             elements: ${elements.map((e) => e.tagname)}
+            server2: ${server2Address.address}:${server2Address.port}
           </pre>
           <main>
             ${elements
