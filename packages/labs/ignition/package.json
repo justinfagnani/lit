@@ -1,5 +1,5 @@
 {
-  "name": "ignition",
+  "name": "@lit-labs/ignition",
   "displayName": "Ignition",
   "description": "Advanced workflows for Lit",
   "version": "0.0.1",
@@ -11,7 +11,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/extension.cjs",
+  "main": "./extension.cjs",
   "contributes": {
     "customEditors": [
       {
@@ -32,12 +32,11 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "vscode:prepublish": "npm run build",
+    "build": "wireit",
+    "pretest": "npm run build && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "wireit"
   },
   "dependencies": {
     "@lit-labs/analyzer": "^0.9.2",
@@ -58,5 +57,28 @@
     "glob": "^10.3.3",
     "mocha": "^10.2.0",
     "typescript": "^5.1.6"
+  },
+  "wireit": {
+    "build": {
+      "command": "tsc --pretty",
+      "dependencies": [
+        "../analyzer:build"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json"
+      ],
+      "output": [
+        "lib",
+        "extension.{cjs}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node ./test/runTest.js",
+      "dependencies": [
+        "build"
+      ]
+    }
   }
 }

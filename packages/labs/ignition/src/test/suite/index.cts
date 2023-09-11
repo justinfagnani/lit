@@ -12,7 +12,7 @@ export function run(): Promise<void> {
   const testsRoot = path.resolve(__dirname, '..');
 
   return new Promise((c, e) => {
-    const testFiles = new glob.Glob('**/**.test.js', {cwd: testsRoot});
+    const testFiles = new glob.Glob('**/**.test.cjs', {cwd: testsRoot});
     const testFileStream = testFiles.stream();
 
     testFileStream.on('data', (file) => {

@@ -3,7 +3,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
-    "outDir": "out",
+    "outDir": ".",
     "lib": ["ES2021"],
     "sourceMap": true,
     "rootDir": "src",
@@ -13,5 +13,7 @@
     // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
     // "noUnusedParameters": true,  /* Report errors on unused parameters. */
     "skipLibCheck": true
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": []
 }
