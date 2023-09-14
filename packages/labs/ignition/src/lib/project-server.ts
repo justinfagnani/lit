@@ -7,6 +7,7 @@ import {getModulePathFromJsPath} from './paths.js';
 import * as path from 'path';
 
 const baseUrl = '/_src/';
+const jsBaseUrl = '/_js/';
 
 export const startServer = async (analyzer: Analyzer, port: number = 3334) => {
   const app = new Koa();

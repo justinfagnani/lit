@@ -1,4 +1,4 @@
-import {startServer} from '../lib/server.js';
+import {startServer} from '../lib/project-server.js';
 import {
   AbsolutePath,
   createPackageAnalyzer,

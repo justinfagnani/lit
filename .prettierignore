@@ -271,6 +271,11 @@ packages/labs/ignition/.vscode-test/
 packages/labs/ignition/**/extension.cjs
 packages/labs/ignition/**/extension.cjs.map
 
+packages/labs/ignition-ui/**/index.js
+packages/labs/ignition-ui/**/index.js.map
+packages/labs/ignition-ui/**/index.d.ts
+packages/labs/ignition-ui/**/index.d.ts.map
+
 packages/labs/motion/development/
 packages/labs/motion/test/
 packages/labs/motion/node_modules/

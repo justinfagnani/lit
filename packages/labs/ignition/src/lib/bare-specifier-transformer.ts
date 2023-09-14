@@ -1,4 +1,4 @@
-// A TypeScript transfor that resolve bare module specifers to relative paths,
+// A TypeScript transform that resolve bare module specifers to relative paths,
 // with the Node module resolution algorithm.
 
 import {resolve} from 'import-meta-resolve';

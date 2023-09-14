@@ -1,19 +1,45 @@
+import cors from 'koa-cors';
 import type {AbsolutePath, Analyzer} from '@lit-labs/analyzer';
 import {createPackageAnalyzer} from '@lit-labs/analyzer/package-analyzer.js';
 import {createRequire} from 'module';
 import type {Server} from 'http';
-import {startServer} from './server.js';
+import {startServer} from './project-server.js';
 import {AddressInfo} from 'net';
+import * as path from 'path';
 
 const require = createRequire(import.meta.url);
 
 import vscode = require('vscode');
+import wds = require('@web/dev-server');
+import {DevServer} from './types.cjs';
+
+const {startDevServer} = wds;
 
 // Map of workspace folder to dev server and analyzer
 const workspaceResourcesCache = new Map<
   string,
   {server: Server; analyzer: Analyzer}
 >();
+
+const uiRoot = path.dirname(require.resolve('@lit-labs/ignition-ui'));
+let _uiServer: DevServer;
+const startUiServer = async () => {
+  return (_uiServer ??= await startDevServer({
+    config: {
+      rootDir: uiRoot,
+      nodeResolve: {
+        exportConditions: ['development', 'browser'],
+        extensions: ['.cjs', '.mjs', '.js'],
+        dedupe: () => true,
+        preferBuiltins: false,
+      },
+      port: 3333,
+      middleware: [cors({origin: '*', credentials: true})],
+    },
+    readCliArgs: false,
+    readFileConfig: false,
+  }));
+};
 
 const getWorkspaceResources = async (
   workspaceFolder: vscode.WorkspaceFolder
@@ -26,7 +52,7 @@ const getWorkspaceResources = async (
       workspaceFolder!.uri.fsPath as AbsolutePath
     );
 
-    const server = await startServer(analyzer, 3333);
+    const server = await startServer(analyzer, 3334);
 
     workspaceResources = {server, analyzer};
     workspaceResourcesCache.set(workspaceFolder.uri.fsPath, workspaceResources);
@@ -66,6 +92,8 @@ export class LitModuleEditorProvider
 
     const {server, analyzer} = await getWorkspaceResources(workspaceFolder!);
 
+    await startUiServer();
+
     webviewPanel.webview.html = this.getHtmlForWebview(
       document,
       workspaceFolder,
@@ -87,12 +115,14 @@ export class LitModuleEditorProvider
     const {port} = server2Address;
 
     const scriptUrl = `http://localhost:${port}/_src/${module.jsPath}`;
+    const uiScriptUrl = `http://localhost:${3333}/index.js`;
 
     return /* html */ `
       <!DOCTYPE html>
       <html lang="en">
         <head>
-          <script type="module" src="${scriptUrl}"></script>
+        <script type="module" src="${uiScriptUrl}"></script>
+        <script type="module" src="${scriptUrl}"></script>
           <style>
             .element-container {
               width: 640px;
@@ -109,6 +139,7 @@ export class LitModuleEditorProvider
             elements: ${elements.map((e) => e.tagname)}
             server2: ${server2Address.address}:${server2Address.port}
           </pre>
+          <test-element></test-element>
           <main>
             ${elements
               .map(
