@@ -1125,12 +1125,9 @@ export abstract class ReactiveElement
   }
 
   private __propertyToAttribute(name: PropertyKey, value: unknown) {
-    const options = (
-      this.constructor as typeof ReactiveElement
-    ).elementProperties.get(name)!;
-    const attr = (
-      this.constructor as typeof ReactiveElement
-    ).__attributeNameForProperty(name, options);
+    const ctor = this.constructor as typeof ReactiveElement;
+    const options = ctor.elementProperties.get(name)!;
+    const attr = ctor.__attributeNameForProperty(name, options);
     if (attr !== undefined && options.reflect === true) {
       const converter =
         (options.converter as ComplexAttributeConverter)?.toAttribute !==
@@ -1140,9 +1137,7 @@ export abstract class ReactiveElement
       const attrValue = converter.toAttribute!(value, options.type);
       if (
         DEV_MODE &&
-        (this.constructor as typeof ReactiveElement).enabledWarnings!.includes(
-          'migration'
-        ) &&
+        ctor.enabledWarnings!.includes('migration') &&
         attrValue === undefined
       ) {
         issueWarning(
