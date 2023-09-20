@@ -957,7 +957,7 @@ export abstract class ReactiveElement
   /**
    * Name of currently reflecting property
    */
-  private __reflectingProperty: PropertyKey | null = null;
+  private __reflectingProperty?: PropertyKey = undefined;
 
   /**
    * Set of controllers.
@@ -978,7 +978,7 @@ export abstract class ReactiveElement
       (res) => (this.enableUpdating = res)
     );
     this._$changedProperties = new Map();
-    // This enqueues a microtask that ust run before the first udpate, so it
+    // This enqueues a microtask that ust run before the first update, so it
     // must be called before requestUpdate()
     this.__saveInstanceProperties();
     // ensures first update will be caught by an early access of
@@ -1157,13 +1157,12 @@ export abstract class ReactiveElement
       // that we'd like to discover).
       // mark state reflecting
       this.__reflectingProperty = name;
-      if (attrValue == null) {
-        this.removeAttribute(attr);
-      } else {
-        this.setAttribute(attr, attrValue as string);
-      }
-      // mark state not reflecting
-      this.__reflectingProperty = null;
+      // mark state not reflecting after updating the attribute
+      this.__reflectingProperty = (
+        attrValue == null
+          ? this.removeAttribute(attr)
+          : this.setAttribute(attr, attrValue as string)
+      ) as undefined;
     }
   }
 
@@ -1191,7 +1190,7 @@ export abstract class ReactiveElement
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ) as any;
       // mark state not reflecting
-      this.__reflectingProperty = null;
+      this.__reflectingProperty = undefined;
     }
   }
 
