@@ -925,7 +925,9 @@ export abstract class ReactiveElement
 
   // Initialize to an unresolved Promise so we can make sure the element has
   // connected before first update.
-  private __updatePromise!: Promise<boolean>;
+  private __updatePromise: Promise<boolean> = new Promise<boolean>(
+    (res) => (this.enableUpdating = res)
+  );
 
   /**
    * True if there is a pending update as a result of calling `requestUpdate()`.
@@ -947,7 +949,7 @@ export abstract class ReactiveElement
    *
    * @internal
    */
-  _$changedProperties!: PropertyValues;
+  _$changedProperties: PropertyValues = new Map();
 
   /**
    * Map with keys of properties that should be reflected when updated.
@@ -974,14 +976,8 @@ export abstract class ReactiveElement
    * are constructed.
    */
   private __initialize() {
-    this.__updatePromise = new Promise<boolean>(
-      (res) => (this.enableUpdating = res)
-    );
-    this._$changedProperties = new Map();
-    // This enqueues a microtask that ust run before the first update, so it
-    // must be called before requestUpdate()
     this.__saveInstanceProperties();
-    // ensures first update will be caught by an early access of
+    // Ensures first update will be caught by an early access of
     // `updateComplete`
     this.requestUpdate();
     (this.constructor as typeof ReactiveElement)._initializers?.forEach((i) =>
