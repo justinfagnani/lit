@@ -35,14 +35,7 @@ type Mutable<T, K extends PropertyKey> = Omit<T, K> & {
 };
 
 // TODO (justinfagnani): Add `hasOwn` here when we ship ES2022
-const {
-  is,
-  defineProperty,
-  getOwnPropertyDescriptor,
-  getOwnPropertyNames,
-  getOwnPropertySymbols,
-  getPrototypeOf,
-} = Object;
+const {is, getPrototypeOf} = Object;
 
 const NODE_MODE = false;
 
@@ -267,15 +260,6 @@ export interface PropertyDeclaration<Type = unknown, TypeHint = unknown> {
    * @internal
    */
   wrapped?: boolean;
-}
-
-/**
- * Map of properties to PropertyDeclaration options. For each property an
- * accessor is made, and the property is processed according to the
- * PropertyDeclaration options.
- */
-export interface PropertyDeclarations {
-  readonly [key: string]: PropertyDeclaration;
 }
 
 type PropertyDeclarationMap = Map<PropertyKey, PropertyDeclaration>;
@@ -551,33 +535,6 @@ export abstract class ReactiveElement
   static elementProperties: PropertyDeclarationMap = new Map();
 
   /**
-   * User-supplied object that maps property names to `PropertyDeclaration`
-   * objects containing options for configuring reactive properties. When
-   * a reactive property is set the element will update and render.
-   *
-   * By default properties are public fields, and as such, they should be
-   * considered as primarily settable by element users, either via attribute or
-   * the property itself.
-   *
-   * Generally, properties that are changed by the element should be private or
-   * protected fields and should use the `state: true` option. Properties
-   * marked as `state` do not reflect from the corresponding attribute
-   *
-   * However, sometimes element code does need to set a public property. This
-   * should typically only be done in response to user interaction, and an event
-   * should be fired informing the user; for example, a checkbox sets its
-   * `checked` property when clicked and fires a `changed` event. Mutating
-   * public properties should typically not be done for non-primitive (object or
-   * array) properties. In other cases when an element needs to manage state, a
-   * private property set with the `state: true` option should be used. When
-   * needed, state properties can be initialized via public properties to
-   * facilitate complex interactions.
-   * @nocollapse
-   * @category properties
-   */
-  static properties: PropertyDeclarations;
-
-  /**
    * Memoized list of all element styles.
    * Created lazily on user subclasses when finalizing the class.
    * @nocollapse
@@ -631,108 +588,6 @@ export abstract class ReactiveElement
   }
 
   private __instanceProperties?: PropertyValues = undefined;
-
-  /**
-   * Creates a property accessor on the element prototype if one does not exist
-   * and stores a {@linkcode PropertyDeclaration} for the property with the
-   * given options. The property setter calls the property's `hasChanged`
-   * property option or uses a strict identity check to determine whether or not
-   * to request an update.
-   *
-   * This method may be overridden to customize properties; however,
-   * when doing so, it's important to call `super.createProperty` to ensure
-   * the property is setup correctly. This method calls
-   * `getPropertyDescriptor` internally to get a descriptor to install.
-   * To customize what properties do when they are get or set, override
-   * `getPropertyDescriptor`. To customize the options for a property,
-   * implement `createProperty` like this:
-   *
-   * ```ts
-   * static createProperty(name, options) {
-   *   options = Object.assign(options, {myOption: true});
-   *   super.createProperty(name, options);
-   * }
-   * ```
-   *
-   * @nocollapse
-   * @category properties
-   */
-  static createProperty(
-    name: PropertyKey,
-    options: PropertyDeclaration = defaultPropertyDeclaration
-  ) {
-    // If this is a state property, force the attribute to false.
-    if (options.state) {
-      (options as Mutable<PropertyDeclaration, 'attribute'>).attribute = false;
-    }
-    this.__prepare();
-    this.elementProperties.set(name, options);
-    if (!options.noAccessor) {
-      const key = DEV_MODE
-        ? // Use Symbol.for in dev mode to make it easier to maintain state
-          // when doing HMR.
-          Symbol.for(`${String(name)} (@property() cache)`)
-        : Symbol();
-      const descriptor = this.getPropertyDescriptor(name, key, options);
-      if (descriptor !== undefined) {
-        defineProperty(this.prototype, name, descriptor);
-      }
-    }
-  }
-
-  /**
-   * Returns a property descriptor to be defined on the given named property.
-   * If no descriptor is returned, the property will not become an accessor.
-   * For example,
-   *
-   * ```ts
-   * class MyElement extends LitElement {
-   *   static getPropertyDescriptor(name, key, options) {
-   *     const defaultDescriptor =
-   *         super.getPropertyDescriptor(name, key, options);
-   *     const setter = defaultDescriptor.set;
-   *     return {
-   *       get: defaultDescriptor.get,
-   *       set(value) {
-   *         setter.call(this, value);
-   *         // custom action.
-   *       },
-   *       configurable: true,
-   *       enumerable: true
-   *     }
-   *   }
-   * }
-   * ```
-   *
-   * @nocollapse
-   * @category properties
-   */
-  protected static getPropertyDescriptor(
-    name: PropertyKey,
-    key: string | symbol,
-    options: PropertyDeclaration
-  ): PropertyDescriptor | undefined {
-    const {get, set} = getOwnPropertyDescriptor(this.prototype, name) ?? {
-      get(this: ReactiveElement) {
-        return this[key as keyof typeof this];
-      },
-      set(this: ReactiveElement, v: unknown) {
-        (this as unknown as Record<string | symbol, unknown>)[key] = v;
-      },
-    };
-    return {
-      get() {
-        return get!.call(this);
-      },
-      set(this: ReactiveElement, value: unknown) {
-        const oldValue = get!.call(this);
-        set!.call(this, value);
-        this.requestUpdate(name, oldValue, options);
-      },
-      configurable: true,
-      enumerable: true,
-    };
-  }
 
   /**
    * Returns the property options associated with the given property.
@@ -799,21 +654,6 @@ export abstract class ReactiveElement
     }
     this[finalized] = true;
     this.__prepare();
-
-    // Create properties from the static properties block:
-    if (this.hasOwnProperty(JSCompiler_renameProperty('properties', this))) {
-      const props = this.properties;
-      const propKeys = [
-        ...getOwnPropertyNames(props),
-        ...getOwnPropertySymbols(props),
-      ];
-      for (const p of propKeys) {
-        // Use of `any` is due to TypeScript lack of support for symbol in
-        // index types
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.createProperty(p, (props as any)[p]);
-      }
-    }
 
     // Create properties from standard decorator metadata:
     const metadata = this[Symbol.metadata];

@@ -54,34 +54,6 @@ export type PropertyDecorator = {
     target: (value: V) => void,
     context: ClassSetterDecoratorContext<C, V>
   ): (this: C, value: V) => void;
-
-  // legacy decorator signature
-  (
-    protoOrDescriptor: Object,
-    name: PropertyKey,
-    descriptor?: PropertyDescriptor
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any;
-};
-
-const legacyProperty = (
-  options: PropertyDeclaration | undefined,
-  proto: Object,
-  name: PropertyKey
-) => {
-  const hasOwnProperty = proto.hasOwnProperty(name);
-  (proto.constructor as typeof ReactiveElement).createProperty(
-    name,
-    hasOwnProperty ? {...options, wrapped: true} : options
-  );
-  // For accessors (which have a descriptor on the prototype) we need to
-  // return a descriptor, otherwise TypeScript overwrites the descriptor we
-  // define in createProperty() with the original descriptor. We don't do this
-  // for fields, which don't have a descriptor, because this could overwrite
-  // descriptor defined by other decorators.
-  return hasOwnProperty
-    ? Object.getOwnPropertyDescriptor(proto, name)
-    : undefined;
 };
 
 // This is duplicated from a similar variable in reactive-element.ts, but
@@ -201,22 +173,14 @@ export function property(options?: PropertyDeclaration): PropertyDecorator {
       | ClassSetterDecoratorContext<C, V>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any => {
-    return (
-      typeof nameOrContext === 'object'
-        ? standardProperty<C, V>(
-            options,
-            protoOrTarget as
-              | ClassAccessorDecoratorTarget<C, V>
-              | ((value: V) => void),
-            nameOrContext as
-              | ClassAccessorDecoratorContext<C, V>
-              | ClassSetterDecoratorContext<C, V>
-          )
-        : legacyProperty(
-            options,
-            protoOrTarget as Object,
-            nameOrContext as PropertyKey
-          )
+    return standardProperty<C, V>(
+      options,
+      protoOrTarget as
+        | ClassAccessorDecoratorTarget<C, V>
+        | ((value: V) => void),
+      nameOrContext as
+        | ClassAccessorDecoratorContext<C, V>
+        | ClassSetterDecoratorContext<C, V>
     ) as PropertyDecorator;
   };
 }

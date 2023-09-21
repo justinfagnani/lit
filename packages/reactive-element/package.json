@@ -156,7 +156,6 @@
   "scripts": {
     "build": "wireit",
     "build:ts": "wireit",
-    "build:ts:std-decorators-tests": "wireit",
     "build:ts:types": "wireit",
     "build:rollup": "wireit",
     "build:babel": "wireit",
@@ -176,7 +175,6 @@
       "dependencies": [
         "build:rollup",
         "build:ts",
-        "build:ts:std-decorators-tests",
         "build:ts:types"
       ]
     },
@@ -196,7 +194,6 @@
       "output": [
         "development/**/*.{js,js.map,d.ts,d.ts.map}",
         "!development/test/decorators-babel",
-        "!development/test/std-decorators",
         "tsconfig.tsbuildinfo",
         "tsconfig.polyfill-support.tsbuildinfo"
       ]
@@ -211,24 +208,7 @@
       "output": [
         "*.d.ts{,.map}",
         "decorators/*.d.ts{,.map}",
-        "legacy-decorators/*.d.ts{,.map}",
-        "std-decorators/*.d.ts{,.map}"
-      ]
-    },
-    "build:ts:std-decorators-tests": {
-      "#comment": "This is a separate script from build:ts because it needs a tsconfig without experimentalDecorators.",
-      "command": "tsc --pretty --project tsconfig.std-decorators-tests.json",
-      "clean": "if-file-deleted",
-      "dependencies": [
-        "build:ts"
-      ],
-      "files": [
-        "src/test/decorators-modern/**/*.ts",
-        "tsconfig.std-decorators-tests.json"
-      ],
-      "output": [
-        "development/test/std-decorators",
-        "tsconfig.std-decorators-tests.tsbuildinfo"
+        "legacy-decorators/*.d.ts{,.map}"
       ]
     },
     "build:rollup": {
@@ -257,7 +237,7 @@
       ]
     },
     "build:babel": {
-      "command": "babel --extensions .ts src/test/std-decorators --out-dir development/test/decorators-babel",
+      "command": "babel --extensions .ts src/test/decorators --out-dir development/test/decorators-babel",
       "files": [
         ".babelrc",
         "src/test/decorators/**/*.ts"
@@ -301,7 +281,6 @@
       "command": "MODE=dev node ../tests/run-web-tests.js \"development/test/**/*_test.js\" --config ../tests/web-test-runner.config.js",
       "dependencies": [
         "build:ts",
-        "build:ts:std-decorators-tests",
         "../tests:build"
       ],
       "env": {
@@ -316,7 +295,6 @@
       "command": "MODE=prod node ../tests/run-web-tests.js \"development/**/*_test.(js|html)\" --config ../tests/web-test-runner.config.js",
       "dependencies": [
         "build:ts",
-        "build:ts:std-decorators-tests",
         "build:rollup",
         "../tests:build"
       ],
@@ -332,7 +310,6 @@
       "command": "node development/test/node-imports.js",
       "dependencies": [
         "build:ts",
-        "build:ts:std-decorators-tests",
         "build:rollup"
       ],
       "files": [],
@@ -342,7 +319,6 @@
       "command": "node --conditions=development development/test/node-imports.js",
       "dependencies": [
         "build:ts",
-        "build:ts:std-decorators-tests",
         "build:rollup"
       ],
       "files": [],
@@ -352,7 +328,6 @@
       "command": "node development/test/node-dom-shim.js",
       "dependencies": [
         "build:ts",
-        "build:ts:std-decorators-tests",
         "build:rollup"
       ],
       "files": [],
@@ -362,7 +337,6 @@
       "command": "node --conditions=development development/test/node-dom-shim.js",
       "dependencies": [
         "build:ts",
-        "build:ts:std-decorators-tests",
         "build:rollup"
       ],
       "files": [],
