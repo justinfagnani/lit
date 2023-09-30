@@ -122,8 +122,10 @@ export class LitModuleEditorProvider
       <html lang="en">
         <head>
         <script type="module" src="${uiScriptUrl}"></script>
-        <script type="module" src="${scriptUrl}"></script>
           <style>
+            html, body {
+              min-height: 100%;
+            }
             .element-container {
               width: 640px;
             }
@@ -143,9 +145,8 @@ export class LitModuleEditorProvider
           <main>
             ${elements
               .map(
-                (e) => `<section class="element-container">
-              <h2>&lt;${e.tagname}&gt;</h2>
-              <${e.tagname}></${e.tagname}></section>`
+                (e) =>
+                  `<iframe srcdoc="&lt;!doctype html>&lt;script type='module' src='${scriptUrl}'>&lt;/script>&lt;${e.tagname}>&lt;/${e.tagname}>"></iframe>`
               )
               .join('')}
           </main>
