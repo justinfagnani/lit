@@ -7,7 +7,7 @@
       "label": "build-ignition",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "build", "--watch", "-w", "@lit-labs/ignition"],
+      "args": ["run", "build", "-w", "@lit-labs/ignition"],
       "problemMatcher": [
         {
           "owner": "wireit",
